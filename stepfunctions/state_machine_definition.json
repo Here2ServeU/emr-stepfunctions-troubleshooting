@@ -1,0 +1,30 @@
+{
+  "Comment": "Retry failed EMR steps",
+  "StartAt": "SubmitEMRJob",
+  "States": {
+    "SubmitEMRJob": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.ClusterId",
+        "Step": {
+          "Name": "Feature Engineering Job",
+          "ActionOnFailure": "CONTINUE",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args": ["spark-submit", "--deploy-mode", "cluster", "s3://your-bucket/scripts/feature_job.py"]
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 10,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "End": true
+    }
+  }
+}
